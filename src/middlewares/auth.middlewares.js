@@ -24,18 +24,22 @@ export const authMiddleware = (req, res, next) => {
       return res.send(401);
     }
 
-    jwt.verify(token, process.env.SECRET_JWT, async (error, decoded) => {
+    jwt.verify(token, process.env.SECRET, async (error, decoded) => {
       if (error) {
-        return res.status(401).send({ message: "Token invalid!" });
+        return res
+          .status(401)
+          .send({ message: `Token invalid, Error: ${error.message}` });
       }
 
       const user = await findById(decoded.id);
 
-      if (!user || !user.id) {
-        return res.status(401).send({ message: "Invalid token!" });
+      if (!user || !user._id) {
+        return res
+          .status(401)
+          .send({ message: `Token invalid` });
       }
 
-      req.userId = user.id;
+      req.userId = user._id;
 
       return next();
     });

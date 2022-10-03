@@ -11,12 +11,6 @@ export const singup = async (req, res) => {
   try {
     let { name, email, password, avatar } = req.body;
 
-    if (!name || !email || !password || !avatar) {
-      return res.status(400).send({
-        message: "Submit all fields for registration",
-      });
-    }
-
     const validation = userSchema.validate(
       { name, email, password, avatar },
       { abortEarly: false }
@@ -67,7 +61,7 @@ export const singin = async (req, res) => {
       return res.status(404).send({ message: "User or Password not found" });
     }
 
-    const token = generateToken(user.id);
+    const token = generateToken(user._id);
 
     res.send({ token });
   } catch (err) {
