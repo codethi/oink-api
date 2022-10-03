@@ -17,7 +17,10 @@ export const singup = async (req, res) => {
       });
     }
 
-    const validation = userSchema.validate(message, { abortEarly: false });
+    const validation = userSchema.validate(
+      { name, email, password, avatar },
+      { abortEarly: false }
+    );
     if (validation.error) {
       const errors = validation.error.details.map((detail) => detail.message);
       res.status(422).send(errors);
