@@ -1,5 +1,5 @@
 import { postSchema } from "../models/Post.js";
-import { createService } from "../services/post.service.js";
+import { createService, findAllService } from "../services/post.service.js";
 
 export const create = async (req, res) => {
   try {
@@ -20,7 +20,7 @@ export const create = async (req, res) => {
       return;
     }
 
-    await createService({image, text, userId});
+    await createService({ image, text, user: userId });
 
     return res.send({
       message: "Post created successfully!",
@@ -30,7 +30,19 @@ export const create = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
-export const findAll = async (req, res) => {};
+export const findAll = async (req, res) => {
+  try {
+    const posts = await findAllService();
+
+    if (posts.length === 0) {
+      return res.status(400).send({ message: "There are no posts" });
+    }
+
+    res.send(posts);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
 export const update = async (req, res) => {};
 export const erase = async (req, res) => {};
 export const like = async (req, res) => {};
