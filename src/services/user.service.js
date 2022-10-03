@@ -9,3 +9,4 @@ export const singinSevice = (email) =>
   db.collection("users").findOne({ email: email });
 export const generateToken = (id) =>
   jwt.sign({ id: id }, process.env.SECRET, { expiresIn: 86400 });
+export const findById = (id) => db.collection("users").findOne({ _id: id });
