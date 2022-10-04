@@ -14,8 +14,8 @@ import { authMiddleware } from "../middlewares/auth.middlewares.js";
 
 route.post("/", authMiddleware, create);
 route.get("/", authMiddleware, findAll);
-route.patch("/", authMiddleware, update);
-route.delete("/", authMiddleware, erase);
+route.patch("/:id", authMiddleware, update);
+route.delete("/:id", authMiddleware, erase);
 route.patch("/like/:id", authMiddleware, like);
 route.patch("/comment/:id", authMiddleware, comment);
 
