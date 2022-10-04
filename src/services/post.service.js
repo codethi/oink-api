@@ -1,21 +1,23 @@
 import { ObjectId } from "mongodb";
 import { db } from "../database/db.js";
 
-export const createService = (body) => db.collection("posts").insertOne(body);
+const postCollection = db.collection("posts");
 
-export const findAllService = () => db.collection("posts").find({}).toArray();
+export const createService = (body) => postCollection.insertOne(body);
+
+export const findAllService = () => postCollection.find({}).toArray();
 
 export const findByIdService = (id) =>
-  db.collection("posts").findOne({ _id: ObjectId(id) });
+  postCollection.findOne({ _id: ObjectId(id) });
 
 export const updateService = ({ postId, image, text }) =>
-  db.collection("posts").updateOne({ _id: postId }, { $set: { image, text } });
+  postCollection.updateOne({ _id: postId }, { $set: { image, text } });
 
 export const deleteService = (id) =>
-  db.collection("posts").deleteOne({ _id: ObjectId(id) });
+  postCollection.deleteOne({ _id: ObjectId(id) });
 
 export const likesService = (id, userId) =>
-  db.collection("posts").updateOne(
+  postCollection.updateOne(
     {
       _id: ObjectId(id),
       "likes.userId": { $nin: [userId] },
@@ -31,13 +33,45 @@ export const likesService = (id, userId) =>
   );
 
 export const likesDeleteService = (id, userId) =>
-  db.collection("posts").updateOne(
+  postCollection.updateOne(
     {
       _id: ObjectId(id),
     },
     {
       $pull: {
         likes: {
+          userId: userId,
+        },
+      },
+    }
+  );
+
+export const commentsService = (id, message, userId) => {
+  let idComment = Math.floor(Date.now() * Math.random()).toString(36);
+  return postCollection.updateOne(
+    {
+      _id: ObjectId(id),
+    },
+    {
+      $push: {
+        comments: { idComment, userId, message, createdAt: new Date() },
+      },
+    },
+    {
+      rawResult: true,
+    }
+  );
+};
+
+export const deleteCommentService = (id, userId, idComment) =>
+  postCollection.updateOne(
+    {
+      _id: ObjectId(id),
+    },
+    {
+      $pull: {
+        comments: {
+          idComment: idComment,
           userId: userId,
         },
       },

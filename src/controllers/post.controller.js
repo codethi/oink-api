@@ -7,6 +7,8 @@ import {
   deleteService,
   likesService,
   likesDeleteService,
+  commentsService,
+  deleteCommentService,
 } from "../services/post.service.js";
 
 export const create = async (req, res) => {
@@ -143,4 +145,38 @@ export const like = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
-export const comment = async (req, res) => {};
+export const comment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message } = req.body;
+    const userId = req.userId.toString();
+
+    if (!message) {
+      return res.status(400).send({ message: "Write a message to comment" });
+    }
+
+    await commentsService(id, message, userId);
+
+    return res.send({
+      message: "Comment successfully completed!",
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+export const deleteComment = async (req, res) => {
+  try {
+    const { id, idComment } = req.params;
+    const userId = req.userId.toString();
+
+    const result = await deleteCommentService(id, userId, idComment);
+    if (result.modifiedCount === 0) {
+      return res.status(200).send({ message: "This comment has already been removed" });
+    }
+
+    return res.send({ message: "Comment successfully removed" });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
