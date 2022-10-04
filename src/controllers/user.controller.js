@@ -72,12 +72,23 @@ export const singin = async (req, res) => {
 
 export const findByIdUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await findById(id);
+    let idParam;
+    if (!req.params.id) {
+      req.params.id = req.userId;
+      idParam = req.params.id;
+    } else {
+      idParam = req.params.id;
+    }
+    if (!idParam) {
+      return res.status(400).send({
+        message: "Send an id in the parameters to search for the user",
+      });
+    }
+    const user = await findById(idParam);
     if (!user) {
       return res.status(404).send({ message: "User not found" });
     }
-    res.send({ user });
+    res.send(user);
   } catch (err) {
     res.status(500).send(err.message);
   }

@@ -5,7 +5,8 @@ const postCollection = db.collection("posts");
 
 export const createService = (body) => postCollection.insertOne(body);
 
-export const findAllService = () => postCollection.find({}).toArray();
+export const findAllService = () =>
+  postCollection.find({}).sort({ _id: -1 }).toArray();
 
 export const findByIdService = (id) =>
   postCollection.findOne({ _id: ObjectId(id) });
