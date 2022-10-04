@@ -4,6 +4,9 @@ import {
   findAllService,
   updateService,
   findByIdService,
+  deleteService,
+  likesService,
+  likesDeleteService,
 } from "../services/post.service.js";
 
 export const create = async (req, res) => {
@@ -25,7 +28,13 @@ export const create = async (req, res) => {
       return;
     }
 
-    await createService({ image, text, user: userId });
+    await createService({
+      image,
+      text,
+      user: userId,
+      likes: [],
+      comments: [],
+    });
 
     return res.send({
       message: "Post created successfully!",
@@ -91,6 +100,47 @@ export const update = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
-export const erase = async (req, res) => {};
-export const like = async (req, res) => {};
+export const erase = async (req, res) => {
+  try {
+    const userId = req.userId.toString();
+    const { id } = req.params;
+
+    const post = await findByIdService(id);
+
+    if (!post) {
+      return res.status(400).send({ message: "This post does not exist" });
+    }
+
+    if (post.user !== userId) {
+      return res.status(400).send({ message: "You can't update this post" });
+    }
+
+    await deleteService(id);
+
+    return res.send({
+      message: "Post deleted successfully!",
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+export const like = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId.toString();
+
+    const postLiked = await likesService(id, userId);
+
+    if (postLiked.modifiedCount === 0) {
+      await likesDeleteService(id, userId);
+      return res.status(200).send({ message: "Like successfully removed" });
+    }
+
+    return res.send({
+      message: "Like done successfully",
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
 export const comment = async (req, res) => {};
