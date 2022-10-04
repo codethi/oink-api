@@ -3,6 +3,7 @@ import {
   singupSevice,
   singinSevice,
   generateToken,
+  findById,
 } from "../services/user.service.js";
 
 import { userSchema } from "../models/User.js";
@@ -64,6 +65,19 @@ export const singin = async (req, res) => {
     const token = generateToken(user._id);
 
     res.send({ token });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+};
+
+export const findByIdUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await findById(id);
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+    res.send({ user });
   } catch (err) {
     res.status(500).send(err.message);
   }
