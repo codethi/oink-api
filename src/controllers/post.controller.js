@@ -11,32 +11,30 @@ import {
   deleteCommentService,
 } from "../services/post.service.js";
 
+import { findById } from "../services/user.service.js";
+
 export const create = async (req, res) => {
   try {
     const { text, image } = req.body;
-    const userId = req.userId.toString();
+    const userId = req.userId;
 
-    const validation = postSchema.validate(
-      {
-        text,
-        image,
-        user: userId,
-      },
-      { abortEarly: false }
-    );
-    if (validation.error) {
-      const errors = validation.error.details.map((detail) => detail.message);
-      res.status(422).send(errors);
-      return;
-    }
-
-    await createService({
+    const newPost = {
       image,
       text,
       user: userId,
       likes: [],
       comments: [],
-    });
+      createdAt: new Date().toLocaleString("pt-Br"),
+    };
+
+    const validation = postSchema.validate(newPost, { abortEarly: false });
+    if (validation.error) {
+      const errors = validation.error.details.map((detail) => detail.message);
+      res.status(422).send({ errors });
+      return;
+    }
+
+    await createService(newPost);
 
     return res.send({
       message: "Post created successfully!",
@@ -50,11 +48,23 @@ export const findAll = async (req, res) => {
   try {
     const posts = await findAllService();
 
-    if (posts.length === 0) {
-      return res.status(400).send({ message: "There are no posts" });
-    }
-
-    res.send(posts);
+    res.send({
+      result: posts.map((post) => {
+        return {
+          id: post._id,
+          text: post.text,
+          image: post.image,
+          likes: post.likes,
+          comments: post.comments.reverse(),
+          createdAt: post.createdAt,
+          userName: post.user.name,
+          userAvatar: post.user.avatar,
+          userEmail: post.user.email,
+          userId: post.user._id,
+          loggedUser: req.userId,
+        };
+      }),
+    });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
@@ -62,7 +72,7 @@ export const findAll = async (req, res) => {
 export const update = async (req, res) => {
   try {
     let { text, image } = req.body;
-    const userId = req.userId.toString();
+    const userId = req.userId;
     const { id } = req.params;
 
     const post = await findByIdService(id);
@@ -104,7 +114,7 @@ export const update = async (req, res) => {
 };
 export const erase = async (req, res) => {
   try {
-    const userId = req.userId.toString();
+    const userId = req.userId;
     const { id } = req.params;
 
     const post = await findByIdService(id);
@@ -113,8 +123,8 @@ export const erase = async (req, res) => {
       return res.status(400).send({ message: "This post does not exist" });
     }
 
-    if (post.user !== userId) {
-      return res.status(400).send({ message: "You can't update this post" });
+    if (String(post.user) !== String(userId)) {
+      return res.status(400).send({ message: "You can't delete this post" });
     }
 
     await deleteService(id);
@@ -129,18 +139,16 @@ export const erase = async (req, res) => {
 export const like = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.userId.toString();
+    const userId = req.userId;
 
     const postLiked = await likesService(id, userId);
 
     if (postLiked.modifiedCount === 0) {
       await likesDeleteService(id, userId);
-      return res.status(200).send({ message: "Like successfully removed" });
+      return res.status(200).send(false);
     }
 
-    return res.send({
-      message: "Like done successfully",
-    });
+    return res.status(200).send(true);
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
@@ -149,13 +157,15 @@ export const comment = async (req, res) => {
   try {
     const { id } = req.params;
     const { message } = req.body;
-    const userId = req.userId.toString();
+    const userId = req.userId;
 
     if (!message) {
       return res.status(400).send({ message: "Write a message to comment" });
     }
 
-    await commentsService(id, message, userId);
+    const user = await findById(userId);
+
+    await commentsService(id, message, user);
 
     return res.send({
       message: "Comment successfully completed!",
@@ -167,12 +177,17 @@ export const comment = async (req, res) => {
 
 export const deleteComment = async (req, res) => {
   try {
-    const { id, idComment } = req.params;
-    const userId = req.userId.toString();
+    const { idPost, idComment } = req.params;
+    const userId = req.userId;
 
-    const result = await deleteCommentService(id, userId, idComment);
+    const user = await findById(userId);
+
+    const result = await deleteCommentService(idPost, user, idComment);
+
     if (result.modifiedCount === 0) {
-      return res.status(200).send({ message: "This comment has already been removed" });
+      return res
+        .status(200)
+        .send({ message: "This comment has already been removed" });
     }
 
     return res.send({ message: "Comment successfully removed" });

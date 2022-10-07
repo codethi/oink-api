@@ -5,8 +5,22 @@ const postCollection = db.collection("posts");
 
 export const createService = (body) => postCollection.insertOne(body);
 
+const agg = [
+  {
+    $lookup: {
+      from: "users",
+      localField: "user",
+      foreignField: "_id",
+      as: "user",
+    },
+  },
+  {
+    $unwind: "$user",
+  },
+];
+
 export const findAllService = () =>
-  postCollection.find({}).sort({ _id: -1 }).toArray();
+  postCollection.aggregate(agg).sort({ _id: -1 }).toArray();
 
 export const findByIdService = (id) =>
   postCollection.findOne({ _id: ObjectId(id) });
@@ -25,7 +39,7 @@ export const likesService = (id, userId) =>
     },
     {
       $push: {
-        likes: { userId, created: new Date() },
+        likes: { userId, created: new Date().toLocaleString("pt-Br") },
       },
     },
     {
@@ -47,7 +61,7 @@ export const likesDeleteService = (id, userId) =>
     }
   );
 
-export const commentsService = (id, message, userId) => {
+export const commentsService = (id, message, user) => {
   let idComment = Math.floor(Date.now() * Math.random()).toString(36);
   return postCollection.updateOne(
     {
@@ -55,7 +69,7 @@ export const commentsService = (id, message, userId) => {
     },
     {
       $push: {
-        comments: { idComment, userId, message, createdAt: new Date() },
+        comments: { idComment, user, message, createdAt: new Date() },
       },
     },
     {
@@ -64,16 +78,16 @@ export const commentsService = (id, message, userId) => {
   );
 };
 
-export const deleteCommentService = (id, userId, idComment) =>
+export const deleteCommentService = (idPost, user, idComment) =>
   postCollection.updateOne(
     {
-      _id: ObjectId(id),
+      _id: ObjectId(idPost),
     },
     {
       $pull: {
         comments: {
           idComment: idComment,
-          userId: userId,
+          user: user,
         },
       },
     }

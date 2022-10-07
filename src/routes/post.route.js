@@ -19,6 +19,6 @@ route.patch("/:id", authMiddleware, update);
 route.delete("/:id", authMiddleware, erase);
 route.patch("/like/:id", authMiddleware, like);
 route.patch("/comment/:id", authMiddleware, comment);
-route.patch("/comment/:id/:idComment", authMiddleware, deleteComment);
+route.patch("/comment/:idPost/:idComment", authMiddleware, deleteComment);
 
 export default route;
