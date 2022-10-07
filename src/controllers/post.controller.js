@@ -9,7 +9,7 @@ import {
   likesDeleteService,
   commentsService,
   deleteCommentService,
-  findPostsByUserIdService
+  findPostsByUserIdService,
 } from "../services/post.service.js";
 
 import { findById } from "../services/user.service.js";
@@ -198,9 +198,16 @@ export const deleteComment = async (req, res) => {
 
 export const findPostsByUserId = async (req, res) => {
   try {
-    const id = req.userId;
+    const userIdJwt = req.userId;
+    const { id } = req.params;
 
-    const posts = await findPostsByUserIdService(id);
+    if (String(userIdJwt) !== id) {
+      return res
+        .status(400)
+        .send({ message: "You cannot see this user's posts" });
+    }
+
+    const posts = await findPostsByUserIdService(userIdJwt);
 
     return res.send({
       result: posts.map((post) => {
