@@ -5,22 +5,23 @@ const postCollection = db.collection("posts");
 
 export const createService = (body) => postCollection.insertOne(body);
 
-const agg = [
-  {
-    $lookup: {
-      from: "users",
-      localField: "user",
-      foreignField: "_id",
-      as: "user",
-    },
-  },
-  {
-    $unwind: "$user",
-  },
-];
-
 export const findAllService = () =>
-  postCollection.aggregate(agg).sort({ _id: -1 }).toArray();
+  postCollection
+    .aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+    ])
+    .sort({ _id: -1 })
+    .toArray();
 
 export const findByIdService = (id) =>
   postCollection.findOne({ _id: ObjectId(id) });
@@ -92,3 +93,26 @@ export const deleteCommentService = (idPost, user, idComment) =>
       },
     }
   );
+
+export const findPostsByUserIdService = (id) =>
+  postCollection
+    .aggregate([
+      {
+        $match: {
+          user: id,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+    ])
+    .sort({ _id: -1 })
+    .toArray();

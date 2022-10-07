@@ -9,6 +9,7 @@ import {
   likesDeleteService,
   commentsService,
   deleteCommentService,
+  findPostsByUserIdService
 } from "../services/post.service.js";
 
 import { findById } from "../services/user.service.js";
@@ -174,7 +175,6 @@ export const comment = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
-
 export const deleteComment = async (req, res) => {
   try {
     const { idPost, idComment } = req.params;
@@ -191,6 +191,34 @@ export const deleteComment = async (req, res) => {
     }
 
     return res.send({ message: "Comment successfully removed" });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+export const findPostsByUserId = async (req, res) => {
+  try {
+    const id = req.userId;
+
+    const posts = await findPostsByUserIdService(id);
+
+    return res.send({
+      result: posts.map((post) => {
+        return {
+          id: post._id,
+          text: post.text,
+          image: post.image,
+          likes: post.likes,
+          comments: post.comments.reverse(),
+          createdAt: post.createdAt,
+          userName: post.user.name,
+          userAvatar: post.user.avatar,
+          userEmail: post.user.email,
+          userId: post.user._id,
+          loggedUser: req.userId,
+        };
+      }),
+    });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
